@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import Webcam from 'react-webcam';
+import api from '../services/api';
 
 const WebcamGuard = forwardRef(({ token }, ref) => {
     const webcamRef = useRef(null);
@@ -18,14 +19,10 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
         if (!imageSrc) return;
 
         try {
-            await fetch('http://localhost:8000/api/proctor/snapshot/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ image: imageSrc })
-            });
+            await api.post('/proctor/snapshot/', 
+                { image: imageSrc },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
         } catch (error) {
             console.error("Failed to upload snapshot", error);
         }
@@ -59,6 +56,11 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
                 audio={false}
                 screenshotFormat="image/jpeg"
                 videoConstraints={{ facingMode: "user" }}
+                onUserMediaError={() => {
+                    alert("FATAL ERROR: Camera access was denied. You must allow camera access to take this test.");
+                    localStorage.clear();
+                    window.location.href = '/';
+                }}
                 style={{
                     width: '100%',
                     height: '100%',
