@@ -20,7 +20,7 @@ def execute_code(source_code, input_data=""):
             [sys.executable, tmp_path],
             input=input_data.encode(),
             capture_output=True,
-            timeout=3, # 3 second limit
+            timeout=35, # 35 second limit for heavy execution
             text=False
         )
         

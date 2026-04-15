@@ -193,7 +193,7 @@ const DashboardPage = () => {
     // Auto-save typed code to map before running
     setCodeMap(prev => ({...prev, [currentQuestion.id]: code}));
 
-    setConsoleOutput('Executing code via Judge0...');
+    setConsoleOutput('Executing code... (Heavy calculation might take up to 30s)');
     setIsSubmitting(true);
     
     try {
