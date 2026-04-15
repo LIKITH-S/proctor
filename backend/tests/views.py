@@ -133,6 +133,7 @@ from .services import execute_code
 
 class SubmissionView(APIView):
     authentication_classes = [CandidateJWTAuthentication]
+    throttle_scope = 'code_execution'
 
     def post(self, request):
         candidate = request.user

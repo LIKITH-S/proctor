@@ -230,7 +230,11 @@ const DashboardPage = () => {
 
       setConsoleOutput(outputText);
     } catch (err) {
-      setConsoleOutput(`Error: ${err.message}`);
+      if (err.response?.status === 429) {
+        setConsoleOutput(`❌ RATE LIMIT EXCEEDED: Please wait a few seconds before running code again. (Limit: 100 runs per minute)`);
+      } else {
+        setConsoleOutput(`Error: ${err.message}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
