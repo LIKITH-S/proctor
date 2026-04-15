@@ -42,7 +42,7 @@ class Question(models.Model):
 class TestCase(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="test_cases")
     input_data = models.TextField(blank=True, help_text="Standard input for the code")
-    expected_output = models.TextField(help_text="Expected standard output")
+    expected_output = models.TextField(blank=True, help_text="Expected standard output")
     is_hidden = models.BooleanField(default=False, help_text="Visible to student vs hidden for grading")
 
     def __str__(self):
