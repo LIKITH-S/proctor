@@ -135,9 +135,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS Config
-CORS_ALLOW_ALL_ORIGINS = DEBUG # Allow all in dev, restrict in prod
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
-
+raw_cors = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
+if raw_cors == '*':
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
+else:
+    CORS_ALLOW_ALL_ORIGINS = DEBUG # Allow all in dev, restrict in prod
+    CORS_ALLOWED_ORIGINS = raw_cors.split(',')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 # Default Primary Key Field
