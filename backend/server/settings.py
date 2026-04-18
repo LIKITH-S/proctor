@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     # Third party
     'rest_framework',
     'corsheaders',
+    'cloudinary_storage',
+    'cloudinary',
     # Local
     'tests',
 ]
@@ -139,7 +141,13 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (File System storage for User Uploads and Proctor Snapshots)
+# Media files (Cloudinary storage for permanent Proctor Snapshots)
+if not DEBUG:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    CLOUDINARY_STORAGE = {
+        'URL': os.getenv('CLOUDINARY_URL')
+    }
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 

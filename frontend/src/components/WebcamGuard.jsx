@@ -1,9 +1,15 @@
-import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import api from '../services/api';
 
 const WebcamGuard = forwardRef(({ token }, ref) => {
     const webcamRef = useRef(null);
+    const tokenRef = useRef(token);
+
+    // Keep the ref in sync with the prop
+    useEffect(() => {
+        tokenRef.current = token;
+    }, [token]);
 
     // Provide immediate capture capability to the parent (for violation triggers)
     useImperativeHandle(ref, () => ({
@@ -12,8 +18,9 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
         }
     }));
 
-    const sendSnapshot = async () => {
-        if (!webcamRef.current) return;
+    const sendSnapshot = useCallback(async () => {
+        const currentToken = tokenRef.current || localStorage.getItem('candidate_token');
+        if (!webcamRef.current || !currentToken) return;
         
         const imageSrc = webcamRef.current.getScreenshot();
         if (!imageSrc) return;
@@ -21,21 +28,22 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
         try {
             await api.post('/proctor/snapshot/', 
                 { image: imageSrc },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${currentToken}` } }
             );
         } catch (error) {
-            console.error("Failed to upload snapshot", error);
+            console.error("Failed to upload snapshot.", error?.response?.status, error?.response?.data);
         }
-    };
+    }, []); // No dependencies — always reads from refs
 
     // 5-second aggressive interval
     useEffect(() => {
+        if (!token) return; // Don't start timer if we don't have a token yet
         const interval = setInterval(() => {
             sendSnapshot();
         }, 5000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [token, sendSnapshot]);
 
     return (
         <div style={{
