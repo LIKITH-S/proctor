@@ -240,17 +240,21 @@ class ProctorSnapshotView(APIView):
             # --- Manual Cloudinary Backup ---
             try:
                 import cloudinary.uploader
-                # We upload the same 'data' content file
+                # Ensure we are at the beginning of the file before uploading
+                snapshot.image.seek(0)
+                
+                print(f"DEBUG: Attempting Cloudinary upload for snapshot {snapshot.id}")
                 upload_result = cloudinary.uploader.upload(
-                    snapshot.image.file,
+                    snapshot.image,
                     folder="proctor_frames/",
                     public_id=f"snapshot_{candidate.id}_{int(datetime.datetime.now().timestamp())}"
                 )
+                
                 snapshot.cloud_url = upload_result.get('secure_url')
                 snapshot.save()
+                print(f"DEBUG: Cloudinary backup SUCCESS: {snapshot.cloud_url}")
             except Exception as cloudinary_err:
-                print(f"Cloudinary backup failed: {cloudinary_err}")
-                # We don't return error here because the local save succeeded
+                print(f"ERROR: Cloudinary backup failed: {str(cloudinary_err)}")
             # --------------------------------
             
             return Response({"status": "Snapshot saved"}, status=status.HTTP_201_CREATED)
