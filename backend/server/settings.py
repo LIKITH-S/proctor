@@ -142,15 +142,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (Cloudinary storage for permanent Proctor Snapshots)
-cloudinary_url = os.getenv('CLOUDINARY_URL')
-cloudinary_prefix = os.getenv('CLOUDINARY_PREFIX')
+cloudinary_key = os.getenv('CLOUDINARY_API_KEY')
+cloudinary_secret = os.getenv('CLOUDINARY_API_SECRET')
 
-if cloudinary_url or cloudinary_prefix:
+if cloudinary_key and cloudinary_secret:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    # Use the prefix if available to avoid Render '@' mangling issues
-    final_cloudinary_url = cloudinary_url or f"{cloudinary_prefix}@dl6xfc2aa"
     CLOUDINARY_STORAGE = {
-        'URL': final_cloudinary_url
+        'CLOUD_NAME': 'dl6xfc2aa',
+        'API_KEY': cloudinary_key,
+        'API_SECRET': cloudinary_secret,
+        'SECURE': True
     }
 
 MEDIA_URL = '/media/'
