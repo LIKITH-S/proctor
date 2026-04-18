@@ -142,10 +142,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (Cloudinary storage for permanent Proctor Snapshots)
-if os.getenv('CLOUDINARY_URL'):
+CLOUDINARY_KEY = os.getenv('CLOUDINARY_KEY')
+CLOUDINARY_SECRET = os.getenv('CLOUDINARY_SECRET')
+
+if CLOUDINARY_KEY and CLOUDINARY_SECRET:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     CLOUDINARY_STORAGE = {
-        'URL': os.getenv('CLOUDINARY_URL')
+        'URL': f'cloudinary://{CLOUDINARY_KEY}:{CLOUDINARY_SECRET}@dl6xfc2aa'
     }
 
 MEDIA_URL = '/media/'
@@ -169,7 +172,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+
+# Hardcoded @gmail.com to avoid Render parsing issues
+email_prefix = os.getenv('EMAIL_USER_PREFIX', 'likith.innote1')
+EMAIL_HOST_USER = f"{email_prefix}@gmail.com"
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
