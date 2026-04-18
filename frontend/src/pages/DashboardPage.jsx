@@ -30,6 +30,14 @@ const DashboardPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    const confirmed = window.confirm("Are you sure you want to log out? Your current code will be saved locally, but the test timer will continue.");
+    if (!confirmed) return;
+    
+    localStorage.clear();
+    window.location.href = '/';
+  };
+
   // Wrapped handleAutoSubmit so it can be called inside useEffect
   const handleAutoSubmitRef = useRef(null);
 
@@ -309,6 +317,19 @@ const DashboardPage = () => {
             style={{ padding: '0.5rem 1.5rem', fontWeight: '600' }}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Test'}
+          </button>
+
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              padding: '0.5rem 1rem', 
+              background: 'transparent', 
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.875rem',
+              color: 'var(--text-dim)'
+            }}
+          >
+            Logout
           </button>
 
         </div>
