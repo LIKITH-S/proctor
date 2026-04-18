@@ -323,10 +323,11 @@ const DashboardPage = () => {
             onClick={handleLogout}
             style={{ 
               padding: '0.5rem 1rem', 
-              background: 'transparent', 
-              border: '1px solid var(--border-subtle)',
+              background: 'rgba(255,255,255,0.05)', 
+              border: '1px solid var(--error)',
               fontSize: '0.875rem',
-              color: 'var(--text-dim)'
+              color: 'var(--error)',
+              borderRadius: '4px'
             }}
           >
             Logout
@@ -363,15 +364,15 @@ const DashboardPage = () => {
               
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>{currentQuestion.title}</h3>
               
-              {currentQuestion.image_url && (
-                <div style={{ marginBottom: '1.5rem', background: '#000', padding: '0.5rem', borderRadius: '8px' }}>
-                  <img src={currentQuestion.image_url} alt="Question diagram" style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px' }} />
-                </div>
-              )}
-
               <div className="markdown-body" style={{ color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '1rem', whiteSpace: 'normal', fontFamily: 'inherit' }}>
                 <ReactMarkdown>{currentQuestion.description}</ReactMarkdown>
               </div>
+
+              {currentQuestion.image_url && (
+                <div style={{ marginTop: '2rem', background: '#000', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  <img src={currentQuestion.image_url} alt="Question diagram" style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px' }} />
+                </div>
+              )}
 
               <div style={{ marginTop: '3rem' }}>
                 <h4 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '1rem' }}>Public Test Cases</h4>
