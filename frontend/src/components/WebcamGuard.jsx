@@ -5,6 +5,7 @@ import api from '../services/api';
 const WebcamGuard = forwardRef(({ token }, ref) => {
     const webcamRef = useRef(null);
     const tokenRef = useRef(token);
+    const [permissionError, setPermissionError] = React.useState(false);
 
     // Keep the ref in sync with the prop
     useEffect(() => {
@@ -20,7 +21,7 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
 
     const sendSnapshot = useCallback(async () => {
         const currentToken = tokenRef.current || localStorage.getItem('candidate_token');
-        if (!webcamRef.current || !currentToken) return;
+        if (!webcamRef.current || !currentToken || permissionError) return;
         
         const imageSrc = webcamRef.current.getScreenshot();
         if (!imageSrc) return;
@@ -33,17 +34,58 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
         } catch (error) {
             console.error("Failed to upload snapshot.", error?.response?.status, error?.response?.data);
         }
-    }, []); // No dependencies — always reads from refs
+    }, [permissionError]); // Skip if we have a permission error
 
     // 5-second aggressive interval
     useEffect(() => {
-        if (!token) return; // Don't start timer if we don't have a token yet
+        if (!token || permissionError) return; 
         const interval = setInterval(() => {
             sendSnapshot();
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [token, sendSnapshot]);
+    }, [token, sendSnapshot, permissionError]);
+
+    if (permissionError) {
+        return (
+            <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.95)',
+                display: 'flex', flexDirection: 'column',
+                justifyContent: 'center', alignItems: 'center',
+                zIndex: 10000, color: 'white', textAlign: 'center',
+                padding: '2rem'
+            }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📷🚫</div>
+                <h2 style={{ color: '#ef4444' }}>Camera Access Blocked</h2>
+                <p style={{ maxWidth: '400px', margin: '1rem 0', lineHeight: '1.6', color: '#ccc' }}>
+                    You previously blocked camera access for this site. 
+                    The browser will not ask again automatically. 
+                </p>
+                <div style={{ 
+                    background: '#1f2937', 
+                    padding: '1.5rem', 
+                    borderRadius: '8px', 
+                    textAlign: 'left',
+                    border: '1px solid #374151'
+                }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>To Fix This:</p>
+                    <ol style={{ paddingLeft: '1.2rem', color: '#fff' }}>
+                        <li>Click the <b>Lock (🔒)</b> or <b>Settings</b> icon in your address bar (top left).</li>
+                        <li>Toggle <b>Camera</b> on OR click <b>'Reset Permission'</b>.</li>
+                        <li><b>Refresh the page</b> to start your test.</li>
+                    </ol>
+                </div>
+                <button 
+                   onClick={() => window.location.reload()}
+                   style={{ marginTop: '2rem', background: '#3b82f6', padding: '0.75rem 2rem' }}
+                >
+                    I've fixed it, Reload Page
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div style={{
@@ -64,11 +106,7 @@ const WebcamGuard = forwardRef(({ token }, ref) => {
                 audio={false}
                 screenshotFormat="image/jpeg"
                 videoConstraints={{ facingMode: "user" }}
-                onUserMediaError={() => {
-                    alert("FATAL ERROR: Camera access was denied. You must allow camera access to take this test.");
-                    localStorage.clear();
-                    window.location.href = '/';
-                }}
+                onUserMediaError={() => setPermissionError(true)}
                 style={{
                     width: '100%',
                     height: '100%',
