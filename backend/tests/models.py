@@ -67,6 +67,7 @@ class Submission(models.Model):
 class ProctorSnapshot(models.Model):
     candidate = models.ForeignKey(AllowedCandidate, on_delete=models.CASCADE, related_name="snapshots")
     image = models.ImageField(upload_to="proctor_frames/")
+    cloud_url = models.URLField(blank=True, null=True, help_text="Permanent backup link on Cloudinary")
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

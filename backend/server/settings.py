@@ -45,8 +45,6 @@ INSTALLED_APPS = [
     # Third party
     'rest_framework',
     'corsheaders',
-    'cloudinary_storage',
-    'cloudinary',
     # Local
     'tests',
 ]
@@ -141,21 +139,21 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (Cloudinary storage for permanent Proctor Snapshots)
-cloudinary_key = os.getenv('CLOUDINARY_API_KEY')
-cloudinary_secret = os.getenv('CLOUDINARY_API_SECRET')
-
-if cloudinary_key and cloudinary_secret:
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': 'dl6xfc2aa',
-        'API_KEY': cloudinary_key,
-        'API_SECRET': cloudinary_secret,
-        'SECURE': True
-    }
-
+# Media files (Local storage on Render disk)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Cloudinary Manual Backup Configuration (Uses split keys to avoid Render '@' issues)
+try:
+    import cloudinary
+    cloudinary.config(
+        cloud_name="dl6xfc2aa",
+        api_key=os.getenv('CLOUDINARY_API_KEY'),
+        api_secret=os.getenv('CLOUDINARY_API_SECRET'),
+        secure=True
+    )
+except ImportError:
+    pass # Library missing in local/migration env
 
 # CORS Config
 raw_cors = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')

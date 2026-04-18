@@ -49,9 +49,17 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(ProctorSnapshot)
 class ProctorSnapshotAdmin(admin.ModelAdmin):
-    list_display = ('candidate', 'timestamp')
+    list_display = ('candidate', 'timestamp', 'cloudinary_backup')
     list_filter = ('candidate', 'timestamp')
-    readonly_fields = ('timestamp',)
+    readonly_fields = ('timestamp', 'cloudinary_backup')
+
+    def cloudinary_backup(self, obj):
+        if obj.cloud_url:
+            from django.utils.html import format_html
+            return format_html('<a href="{}" target="_blank">View Permanent Backup</a>', obj.cloud_url)
+        return "No backup available"
+    
+    cloudinary_backup.short_description = "Cloud Backup"
 
 @admin.register(Violation)
 class ViolationAdmin(admin.ModelAdmin):
