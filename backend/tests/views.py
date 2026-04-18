@@ -152,17 +152,24 @@ class SubmissionView(APIView):
         results = []
 
         for tc in test_cases:
-            res = execute_code(code, tc.input_data)
-            
-            # Simple output comparison (ignoring line endings/trailing whitespace)
-            expected = tc.expected_output.strip()
-            actual = (res.get('stdout') or "").strip()
-            
-            # If compile error or runtime error
-            if res.get('status') != 'Accepted':
+            try:
+                res = execute_code(code, tc.input_data)
+                
+                # Handling null safety for expected_output
+                expected = (tc.expected_output or "").strip()
+                actual = (res.get('stdout') or "").strip()
+                
+                # If compile error or runtime error
+                if res.get('status') != 'Accepted':
+                    passed = False
+                else:
+                    passed = (expected == actual)
+            except Exception as execution_err:
+                print(f"CRITICAL ERROR during execution: {execution_err}")
                 passed = False
-            else:
-                passed = (expected == actual)
+                res = {"status": "Server Error", "stderr": str(execution_err)}
+                expected = (tc.expected_output or "").strip()
+                actual = "N/A"
 
             if passed:
                 passed_count += 1
