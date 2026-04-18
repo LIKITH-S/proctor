@@ -142,7 +142,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (Cloudinary storage for permanent Proctor Snapshots)
-if not DEBUG:
+if os.getenv('CLOUDINARY_URL'):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     CLOUDINARY_STORAGE = {
         'URL': os.getenv('CLOUDINARY_URL')
