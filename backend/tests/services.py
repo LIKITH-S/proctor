@@ -40,7 +40,7 @@ def execute_code(source_code, input_data=""):
             "memory": 0,
         }
     except subprocess.TimeoutExpired:
-        return {"status": "Time Limit Exceeded", "stderr": "Execution timed out after 5 seconds."}
+        return {"status": "Time Limit Exceeded", "stderr": f"Execution timed out after 35 seconds."}
     except Exception as e:
         return {"error": str(e), "status": "Request Failed"}
     finally:

@@ -136,81 +136,92 @@ class SubmissionView(APIView):
     throttle_scope = 'code_execution'
 
     def post(self, request):
-        candidate = request.user
-        question_id = request.data.get('question_id')
-        code = request.data.get('code')
-        is_final = request.data.get('is_final', False)
-
         try:
-            question = Question.objects.get(id=question_id, test=candidate.test)
-        except Question.DoesNotExist:
-            return Response({"error": "Question not found."}, status=status.HTTP_404_NOT_FOUND)
+            candidate = request.user
+            question_id = request.data.get('question_id')
+            code = request.data.get('code')
+            is_final = request.data.get('is_final', False)
 
-        test_cases = question.test_cases.all()
-        total_cases = test_cases.count()
-        passed_count = 0
-        results = []
-
-        for tc in test_cases:
             try:
-                res = execute_code(code, tc.input_data)
-                
-                # Handling null safety for expected_output
-                expected = (tc.expected_output or "").strip()
-                actual = (res.get('stdout') or "").strip()
-                
-                # If compile error or runtime error
-                if res.get('status') != 'Accepted':
+                question = Question.objects.get(id=question_id, test=candidate.test)
+            except Question.DoesNotExist:
+                return Response({"error": "Question not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            test_cases = question.test_cases.all()
+            total_cases = test_cases.count()
+            passed_count = 0
+            results = []
+
+            for tc in test_cases:
+                try:
+                    # Sanitize input: ensure it's a string, not None
+                    safe_input = tc.input_data or ""
+                    res = execute_code(code, safe_input)
+                    
+                    # Handling null safety for expected_output
+                    expected = (tc.expected_output or "").strip()
+                    actual = (res.get('stdout') or "").strip()
+                    
+                    # If compile error or runtime error
+                    if res.get('status') != 'Accepted':
+                        passed = False
+                    else:
+                        passed = (expected == actual)
+                except Exception as execution_err:
+                    print(f"ERROR during code execution loop: {execution_err}")
                     passed = False
-                else:
-                    passed = (expected == actual)
-            except Exception as execution_err:
-                print(f"CRITICAL ERROR during execution: {execution_err}")
-                passed = False
-                res = {"status": "Server Error", "stderr": str(execution_err)}
-                expected = (tc.expected_output or "").strip()
-                actual = "N/A"
+                    res = {"status": "Execution Error", "stderr": str(execution_err)}
+                    expected = (tc.expected_output or "").strip()
+                    actual = "N/A"
 
-            if passed:
-                passed_count += 1
-            
-            # Only store full logs if it's a public test case
-            results.append({
-                "test_case_id": tc.id,
-                "is_hidden": tc.is_hidden,
-                "passed": passed,
-                "status": res.get('status'),
-                "input_data": tc.input_data if not tc.is_hidden else "[Hidden]",
-                "expected_output": expected if not tc.is_hidden else "[Hidden]",
-                "actual_output": actual if not tc.is_hidden else "[Hidden]",
-                "error": res.get('stderr') or res.get('compile_output')
+                if passed:
+                    passed_count += 1
+                
+                results.append({
+                    "test_case_id": tc.id,
+                    "is_hidden": tc.is_hidden,
+                    "passed": passed,
+                    "status": res.get('status'),
+                    "input_data": tc.input_data if not tc.is_hidden else "[Hidden]",
+                    "expected_output": expected if not tc.is_hidden else "[Hidden]",
+                    "actual_output": actual if not tc.is_hidden else "[Hidden]",
+                    "error": res.get('stderr') or res.get('compile_output') or res.get('error')
+                })
+
+            score = int((passed_count / total_cases) * 100) if total_cases > 0 else 0
+
+            # Save submission
+            submission = Submission.objects.create(
+                candidate=candidate,
+                question=question,
+                code=code,
+                score=score,
+                passed_cases=passed_count,
+                total_cases=total_cases,
+                result_log=str(results),
+                is_final=is_final
+            )
+
+            if is_final:
+                candidate.completed_at = timezone.now()
+                candidate.save()
+
+            return Response({
+                "score": score,
+                "passed_count": passed_count,
+                "total_count": total_cases,
+                "results": results,
+                "submission_id": submission.id
             })
-
-        score = int((passed_count / total_cases) * 100) if total_cases > 0 else 0
-
-        # Save submission
-        submission = Submission.objects.create(
-            candidate=candidate,
-            question=question,
-            code=code,
-            score=score,
-            passed_cases=passed_count,
-            total_cases=total_cases,
-            result_log=str(results),
-            is_final=is_final
-        )
-
-        if is_final:
-            candidate.completed_at = timezone.now()
-            candidate.save()
-
-        return Response({
-            "score": score,
-            "passed_count": passed_count,
-            "total_count": total_cases,
-            "results": results,
-            "submission_id": submission.id
-        })
+        except Exception as master_err:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"MASTER 500 ERROR: {error_trace}")
+            return Response({
+                "error": "Server-side crash detected",
+                "message": str(master_err),
+                "traceback": error_trace
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 import base64
 from django.core.files.base import ContentFile
